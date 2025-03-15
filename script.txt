@@ -1,0 +1,16 @@
+Hi everyone! Today, I’m going to talk about our SOAP-based banking system. 
+SOAP, or Simple Object Access Protocol, is a protocol used for secure and structured communication in web services. 
+It’s perfect for industries like banking, where security and reliability are critical.
+
+Why SOAP?
+So, why did we choose SOAP? Well, SOAP has some key advantages:
+Security: It supports WS-Security, which encrypts and authenticates data, making it ideal for handling sensitive financial information.
+Reliability: SOAP uses XML for structured communication, ensuring that transactions are error-free.
+Complexity: It can handle complex operations, like fund transfers, with ease."
+
+The Banking System:
+Our project is a banking system where users can check their account balance and transfer funds securely. The system has two main parts:
+The SOAP Server, which handles requests and interacts with a database.
+The SOAP Client, which sends requests to the server and displays the results.
+SOAP can be used to build secure and reliable systems for handling financial transactions
+
