@@ -30,7 +30,7 @@ class SOAPRequestHandler(BaseHTTPRequestHandler):
         self.end_headers()
         self.wfile.write(response.encode())
 
-def run(port=8081):
+def run(port=8080):
     server = HTTPServer(('0.0.0.0', port), SOAPRequestHandler)
     print(f"SOAP server running on port {port}...")
     server.serve_forever()
