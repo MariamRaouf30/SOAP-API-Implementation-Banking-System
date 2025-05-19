@@ -1,39 +1,59 @@
-from http.server import BaseHTTPRequestHandler, HTTPServer
+from flask import Flask, request, Response
 from xml.etree import ElementTree as ET
+
+app = Flask(__name__)
 
 accounts = {"123456": 5000.0, "654321": 3000.0}
 
-class SOAPRequestHandler(BaseHTTPRequestHandler):
-    def do_POST(self):
-        length = int(self.headers['Content-Length'])
-        data = self.rfile.read(length)
-        root = ET.fromstring(data)
-        method = root.find('.//{http://schemas.xmlsoap.org/soap/envelope/}Body')[0].tag
+@app.route("/", methods=["POST"])
+def soap_handler():
+    try:
+        root = ET.fromstring(request.data.decode("utf-8"))
+        body = root.find('.//{http://schemas.xmlsoap.org/soap/envelope/}Body')
+        method_elem = list(body)[0]
+        method = method_elem.tag
 
         if method.endswith('getBalance'):
-            acc = root.find('.//account').text
+            acc_elem = method_elem.find('account')
+            acc = acc_elem.text if acc_elem is not None else None
             balance = accounts.get(acc, "Account not found")
+
             response = f"""
             <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-                <soap:Body><getBalanceResponse><balance>{balance}</balance></getBalanceResponse></soap:Body>
+                <soap:Body>
+                    <getBalanceResponse>
+                        <balance>{balance}</balance>
+                    </getBalanceResponse>
+                </soap:Body>
             </soap:Envelope>
             """
         else:
             response = """
             <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
-                <soap:Body><soap:Fault><faultcode>Server</faultcode><faultstring>Method not found</faultstring></soap:Fault></soap:Body>
+                <soap:Body>
+                    <soap:Fault>
+                        <faultcode>Server</faultcode>
+                        <faultstring>Method not found</faultstring>
+                    </soap:Fault>
+                </soap:Body>
             </soap:Envelope>
             """
 
-        self.send_response(200)
-        self.send_header('Content-type', 'text/xml')
-        self.end_headers()
-        self.wfile.write(response.encode())
+        return Response(response.strip(), mimetype='text/xml')
 
-def run(port=8080):
-    server = HTTPServer(('0.0.0.0', port), SOAPRequestHandler)
-    print(f"SOAP server running on port {port}...")
-    server.serve_forever()
+    except Exception as e:
+        error_response = f"""
+        <soap:Envelope xmlns:soap="http://schemas.xmlsoap.org/soap/envelope/">
+            <soap:Body>
+                <soap:Fault>
+                    <faultcode>Server</faultcode>
+                    <faultstring>Internal server error: {str(e)}</faultstring>
+                </soap:Fault>
+            </soap:Body>
+        </soap:Envelope>
+        """
+        return Response(error_response.strip(), status=500, mimetype='text/xml')
 
-if __name__ == '__main__':
-    run()
+
+if __name__ == "__main__":
+    app.run(host="0.0.0.0", port=8080)
